@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t jobinesh/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jobinesh/react-test npm test
+
+after_success:
+  - docker build -t jobinesh/multi-client ./client
+  - docker build -t jobinesh/multi-nginx ./nginx
+  - docker build -t jobinesh/multi-server ./server
+  - docker build -t jobinesh/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push jobinesh/multi-client
+  - docker push jobinesh/multi-nginx
+  - docker push jobinesh/multi-server
+  - docker push jobinesh/multi-worker
